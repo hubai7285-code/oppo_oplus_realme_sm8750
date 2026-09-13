@@ -366,6 +366,8 @@ jobs:
         run: |
           cd kernel_workspace
           echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          #让 KernelSU-Next (SuSFS) 使用 Hybrid hook 模式：显式启用 KPROBES 内核探针（缺少 KPROBES/TRACEPOINTS 时会回退为 Inline hook）
+          echo "CONFIG_KPROBES=y" >> ./common/arch/arm64/configs/gki_defconfig
           if [[ "${{ github.event.inputs.susfs_enable }}" == "false" ]]; then
             echo "CONFIG_KSU_SUSFS=n" >> ./common/arch/arm64/configs/gki_defconfig
           fi
