@@ -311,6 +311,15 @@ jobs:
             cd ./KernelSU
             patch -p1 < 10_enable_susfs_for_ksu.patch || true
           fi
+
+          if [[ ${{ github.event.inputs.ksu_type }} == "ksunext" ]]; then
+            echo "正在修正 KernelSU-Next selinux_hide 函数导出（修复与 SUSFS 内核侧引用导致的链接错误）..."
+            SELINUX_HIDE="$GITHUB_WORKSPACE/kernel_workspace/common/drivers/kernelsu/feature/selinux_hide.c"
+            sed -i 's/^static int security_context_to_sid_with_policy(/int security_context_to_sid_with_policy(/' "$SELINUX_HIDE"
+            sed -i 's/^static int security_sid_to_context_with_policy(/int security_sid_to_context_with_policy(/' "$SELINUX_HIDE"
+            sed -i 's/^static void security_compute_av_user_with_policy(/void security_compute_av_user_with_policy(/' "$SELINUX_HIDE"
+            grep -n "with_policy" "$SELINUX_HIDE" | head -12 || true
+          fi
           
       - name: 应用lz4 1.10.0 & zstd 1.5.7补丁
         if: inputs.lz4_enable
