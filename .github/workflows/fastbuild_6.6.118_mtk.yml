@@ -398,8 +398,17 @@ jobs:
             echo "CONFIG_CRYPTO_842=y" >> ./common/arch/arm64/configs/gki_defconfig
           fi
           # 启用自研扩展压缩算法 zstdp（crypto/abk_zstdp，来自 hubai7285-code/android_kernel_oneplus_mt6991v1 分支）
+          # 关键：本树 gki_defconfig 是 CONFIG_ZRAM=m，而工作流只 make Image 不编模块，
+          # 导致刷入的 Image 里没有 zram（设备仍用厂商 stock zram.ko，看不到 zstdp）。
+          # 这里强制把 zram 及其优化项编进内核（Image）。
+          echo "CONFIG_ZRAM=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_CRYPTO_ZSTDP=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_ZRAM_DEF_COMP_ZSTDP=y" >> ./common/arch/arm64/configs/gki_defconfig
+          # zram 可移植优化项（重构版 moon_zram 特性，自包含）
+          echo "CONFIG_ZRAM_OPT_STATS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ZRAM_UNLIMITED_WRITEBACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ZRAM_KCOMPRESSD_OPT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ZRAM_KSHRINK_SLABD=y" >> ./common/arch/arm64/configs/gki_defconfig
           # 开启O2编译优化配置
           echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> ./common/arch/arm64/configs/gki_defconfig
           #禁用 defconfig 检查
