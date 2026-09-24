@@ -333,8 +333,15 @@ jobs:
           cp ./$GITHUB_ACTOR/zram_patch/002-zstd.patch ./common/
           cd ./common
           git apply -p1 < 001-lz4.patch || true
+          echo "==== zstd 版本（打补丁前） ===="
+          grep -m1 'ZSTD_VERSION_RELEASE' ./include/linux/zstd_lib.h || echo '!! include/linux/zstd_lib.h 未找到'
           git apply -p1 < 001-lz4-clearMake.patch || true
           patch -p1 < 002-zstd.patch || true
+          echo "==== zstd 版本（打补丁后，应为 7 => 1.5.7） ===="
+          grep -n 'ZSTD_VERSION_RELEASE' ./include/linux/zstd_lib.h || echo '!! 未找到 include/linux/zstd_lib.h'
+          echo "exact-version-string: $(grep -m1 'ZSTD_VERSION_STRING' ./include/linux/zstd_lib.h)"
+          echo "被拒绝的 hunk 文件(*.rej) = $(find . -name '*.rej' | wc -l)"
+          find . -name '*.rej' | head -20 || true
 
       - name: 应用 lz4kd 补丁
         if: inputs.lz4kd_enable
@@ -390,6 +397,9 @@ jobs:
             echo "CONFIG_CRYPTO_LZ4KD=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_CRYPTO_842=y" >> ./common/arch/arm64/configs/gki_defconfig
           fi
+          # 启用自研扩展压缩算法 zstdp（crypto/abk_zstdp，来自 hubai7285-code/android_kernel_oneplus_mt6991v1 分支）
+          echo "CONFIG_CRYPTO_ZSTDP=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ZRAM_DEF_COMP_ZSTDP=y" >> ./common/arch/arm64/configs/gki_defconfig
           # 开启O2编译优化配置
           echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> ./common/arch/arm64/configs/gki_defconfig
           #禁用 defconfig 检查
