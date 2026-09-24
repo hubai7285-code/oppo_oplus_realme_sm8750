@@ -649,8 +649,26 @@ jobs:
           sudo rm -rf /usr/local/lib/android &
           sudo rm -rf /opt/ghc &
           sudo rm -rf /opt/hostedtoolcache/CodeQL &
-          make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" LD="ld.lld" HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig &&
+          # ABK:规避 kallsyms relative mode 因“镜像外异常低地址符号”导致的 vmlinux 链接失败
+          sed -i 's#^\tconst char \*name = sym_name(s);$#\tconst char *name = sym_name(s);\n\tif (s->addr == 0 || (_text \&\& s->addr < _text))\n\t\treturn 0;#' scripts/kallsyms.c
+          grep -q 's->addr < _text' scripts/kallsyms.c && echo '[ABK-GUARD] 已给 scripts/kallsyms.c 打补丁' || echo '[ABK-GUARD] 补丁未生效(锚点未命中)'
+          make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" LD="ld.lld" HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig
+          set +e
           make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="$(pwd)/cc-wrapper" LD="$(pwd)/ld-wrapper" HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error Image
+          ABK_RC=$?
+          set -e
+          echo '===== [ABK诊断] kallsyms 输入最低地址符号(前20行) ====='
+          if [ -f out/.tmp_vmlinux.kallsyms1.syms ]; then
+            head -20 out/.tmp_vmlinux.kallsyms1.syms || true
+            echo '===== [ABK诊断] 符号类型统计(前15) ====='
+            awk 'NF>=3{print $2}' out/.tmp_vmlinux.kallsyms1.syms | sort | uniq -c | sort -rn | head -15 || true
+          else
+            echo '(未生成 out/.tmp_vmlinux.kallsyms1.syms)'
+          fi
+          if [ $ABK_RC -ne 0 ]; then
+            echo "内核编译失败 exit=$ABK_RC"
+            exit $ABK_RC
+          fi
           
           # 编译后时间劫持二次校验
           echo "--- 编译后环境时间: $(LD_PRELOAD=$PRELOAD_LIBS date) ---"
