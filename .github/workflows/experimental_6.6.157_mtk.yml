@@ -567,7 +567,7 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
            
-      - name: 调试: 关闭 MODVERSIONS
+      - name: 调试-关闭MODVERSIONS
         if: ${{ inputs.modversions_off }}
         run: |
           echo "# CONFIG_MODVERSIONS is not set" >> ./common/arch/arm64/configs/gki_defconfig
