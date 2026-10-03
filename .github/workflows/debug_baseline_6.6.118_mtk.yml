@@ -130,7 +130,7 @@ jobs:
           rm -f ./ccache &
           
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/baseline_6.6.118_mtk.zip -o common.zip && 
+          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/baseline_vendor_tip.zip -o common.zip && 
           unzip -q common.zip && 
           mv "android_kernel_oneplus_mt6991v1-oneplus-mt6991_b_16.0.0_oneplus_ace5_ultra_lts" common &&
           rm -rf common.zip &
