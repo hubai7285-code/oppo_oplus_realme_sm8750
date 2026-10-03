@@ -11,6 +11,11 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      source_branch:
+        description: '源码分支(默认LTS分支; 调试时可填其它分支)'
+        required: false
+        type: string
+        default: 'oneplus/mt6991_b_16.0.0_oneplus_ace5_ultra_lts'
       ksu_type:
         description: 'KernelSU分支(ReSukiSU/SukiSU Ultra/KernelSU Next/KSU(原版)/无内置KSU,默认ReSukiSU)'
         required: true
@@ -130,9 +135,9 @@ jobs:
           rm -f ./ccache &
           
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/oneplus/mt6991_b_16.0.0_oneplus_ace5_ultra_lts.zip -o common.zip && 
+          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/${{ inputs.source_branch }}.zip -o common.zip && 
           unzip -q common.zip && 
-          mv "android_kernel_oneplus_mt6991v1-oneplus-mt6991_b_16.0.0_oneplus_ace5_ultra_lts" common &&
+          BR="${{ inputs.source_branch }}"; BR="${BR//\//-}"; mv "android_kernel_oneplus_mt6991v1-${BR}" common &&
           rm -rf common.zip &
           
           echo "正在克隆llvm-clang18工具链..." &&
