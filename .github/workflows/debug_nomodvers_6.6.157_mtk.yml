@@ -739,7 +739,13 @@ jobs:
       - name: 上传 ZIP 工件
         uses: actions/upload-artifact@v7
         with:
-          path: ${{ github.workspace }}/kernel_workspace/AnyKernel*.zip
+          path: |
+            ${{ github.workspace }}/kernel_workspace/AnyKernel*.zip
+            ${{ github.workspace }}/kernel_workspace/common/out/Module.symvers
+            ${{ github.workspace }}/kernel_workspace/common/out/.config
+            common/out/Module.symvers
+            common/out/.config
+          if-no-files-found: warn
           archive: false
 
   release:
