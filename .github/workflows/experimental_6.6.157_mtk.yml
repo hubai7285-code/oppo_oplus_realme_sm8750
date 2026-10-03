@@ -92,6 +92,16 @@ on:
         default: 'false'
       kernel_suffix:
         description: '内核后缀(留空默认,开头别加连字符,勿加空格等影响指令运行的保留字符)'
+      source_branch:
+        description: '源码分支(默认LTS分支; 基线对照用 baseline_6.6.118_mtk)'
+        required: false
+        type: string
+        default: 'oneplus/mt6991_b_16.0.0_oneplus_ace5_ultra_lts'
+      modversions_off:
+        description: '调试:关闭CONFIG_MODVERSIONS(验证模块CRC兼容性,默认关)'
+        required: false
+        type: boolean
+        default: false
         required: false
         type: string
         default: ''
@@ -130,7 +140,7 @@ jobs:
           rm -f ./ccache &
           
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/oneplus/mt6991_b_16.0.0_oneplus_ace5_ultra_lts.zip -o common.zip && 
+          aria2c -s16 -x16 -k1M https://github.com/hubai7285-code/android_kernel_oneplus_mt6991v1/archive/refs/heads/${{ inputs.source_branch }}.zip -o common.zip && 
           unzip -q common.zip && 
           mv "android_kernel_oneplus_mt6991v1-oneplus-mt6991_b_16.0.0_oneplus_ace5_ultra_lts" common &&
           rm -rf common.zip &
@@ -557,7 +567,21 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
            
+      - name: 调试: 关闭 MODVERSIONS
+        if: ${{ inputs.modversions_off }}
+        run: |
+          echo "# CONFIG_MODVERSIONS is not set" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "MODVERSIONS lines now:"; grep -n MODVERSIONS ./common/arch/arm64/configs/gki_defconfig || true
       - name: 构建内核
+      - name: 上传调试工件(Module.symvers/config)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-symvers-config
+          if-no-files-found: warn
+          path: |
+            common/out/Module.symvers
+            common/out/.config
         run: |
           WORKDIR="$(pwd)"
           export PATH="/usr/lib/ccache:$PATH"
